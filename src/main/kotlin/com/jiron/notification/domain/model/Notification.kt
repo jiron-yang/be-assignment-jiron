@@ -6,7 +6,9 @@ import com.jiron.notification.domain.vo.RetryPolicy
 import java.time.LocalDateTime
 
 /**
- * 알림 도메인 모델
+ * 알림 도메인 모델 (Aggregate Root)
+ *
+ * 모든 상태 변경은 도메인 메서드를 통해서만 가능하다.
  */
 class Notification(
     val id: Long = 0L,
@@ -15,13 +17,25 @@ class Notification(
     val channel: String,
     val title: String,
     val content: String,
-    var status: NotificationStatus = NotificationStatus.PENDING,
-    var retryCount: Int = 0,
+    status: NotificationStatus = NotificationStatus.PENDING,
+    retryCount: Int = 0,
     val maxRetryCount: Int = RetryPolicy.MAX_RETRY_COUNT,
-    var nextRetryAt: LocalDateTime = LocalDateTime.now(),
+    nextRetryAt: LocalDateTime = LocalDateTime.now(),
     val referenceEventId: String,
-    var sentAt: LocalDateTime? = null
+    sentAt: LocalDateTime? = null
 ) {
+
+    var status: NotificationStatus = status
+        private set
+
+    var retryCount: Int = retryCount
+        private set
+
+    var nextRetryAt: LocalDateTime = nextRetryAt
+        private set
+
+    var sentAt: LocalDateTime? = sentAt
+        private set
 
     /**
      * 발송 처리 시작: PENDING → PROCESSING

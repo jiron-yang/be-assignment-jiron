@@ -31,10 +31,10 @@ class NotificationProcessorTest {
             channel = "EMAIL",
             title = "테스트",
             content = "내용",
-            referenceEventId = "event-1"
+            referenceEventId = "event-1",
+            retryCount = retryCount
         )
         notification.startProcessing()
-        notification.retryCount = retryCount
         return notification
     }
 
