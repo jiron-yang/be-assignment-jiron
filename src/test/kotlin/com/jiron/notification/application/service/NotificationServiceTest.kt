@@ -24,7 +24,7 @@ class NotificationServiceTest @Autowired constructor(
             referenceEventId = "event-service-1"
         )
 
-        val result = notificationService.send(command)
+        val result = notificationService.execute(command)
 
         assertThat(result.id).isGreaterThan(0)
         assertThat(result.recipientId).isEqualTo("user-service-1")
@@ -42,8 +42,8 @@ class NotificationServiceTest @Autowired constructor(
             referenceEventId = "event-idempotent-1"
         )
 
-        val first = notificationService.send(command)
-        val second = notificationService.send(command)
+        val first = notificationService.execute(command)
+        val second = notificationService.execute(command)
 
         assertThat(first.id).isEqualTo(second.id)
     }

@@ -29,7 +29,7 @@ class NotificationService(
      * 멱등성 키(recipientId + notificationType + referenceEventId)로 중복 방지
      */
     @Transactional
-    override fun send(command: SendNotificationCommand): Notification {
+    override fun execute(command: SendNotificationCommand): Notification {
         val existing = notificationRepository.findByIdempotencyKey(
             command.recipientId,
             command.notificationType,

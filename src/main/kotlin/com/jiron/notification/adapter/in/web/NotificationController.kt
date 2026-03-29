@@ -29,7 +29,7 @@ class NotificationController(
     /** 알림 발송 요청 */
     @PostMapping
     fun send(@Valid @RequestBody request: SendNotificationRequest): ResponseEntity<NotificationResponse> {
-        val notification = sendNotificationUseCase.send(request.toCommand())
+        val notification = sendNotificationUseCase.execute(request.toCommand())
         return ResponseEntity.status(201).body(NotificationResponse.from(notification))
     }
 

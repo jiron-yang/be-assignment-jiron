@@ -7,7 +7,7 @@ import com.jiron.notification.domain.vo.NotificationType
  * 알림 발송 요청 유즈케이스
  */
 interface SendNotificationUseCase {
-    fun send(command: SendNotificationCommand): Notification
+    fun execute(command: SendNotificationCommand): Notification
 }
 
 /**
