@@ -115,6 +115,72 @@ class NotificationTest {
         assertThat(notification.canRetry()).isFalse()
     }
 
+    // === 생성 시 비즈니스 정책 검증 ===
+
+    @Test
+    @DisplayName("빈 제목으로 생성 시 예외 발생")
+    fun create_blankTitle_throwsException() {
+        assertThatThrownBy {
+            Notification(
+                recipientId = RecipientId("user-1"),
+                notificationType = NotificationType.EMAIL,
+                title = "  ",
+                content = "내용",
+                referenceEventId = ReferenceEventId("event-1")
+            )
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessageContaining("Title")
+    }
+
+    @Test
+    @DisplayName("빈 내용으로 생성 시 예외 발생")
+    fun create_blankContent_throwsException() {
+        assertThatThrownBy {
+            Notification(
+                recipientId = RecipientId("user-1"),
+                notificationType = NotificationType.EMAIL,
+                title = "제목",
+                content = "",
+                referenceEventId = ReferenceEventId("event-1")
+            )
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessageContaining("Content")
+    }
+
+    @Test
+    @DisplayName("음수 retryCount로 생성 시 예외 발생")
+    fun create_negativeRetryCount_throwsException() {
+        assertThatThrownBy {
+            Notification(
+                recipientId = RecipientId("user-1"),
+                notificationType = NotificationType.EMAIL,
+                title = "제목",
+                content = "내용",
+                referenceEventId = ReferenceEventId("event-1"),
+                retryCount = -1
+            )
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessageContaining("negative")
+    }
+
+    @Test
+    @DisplayName("SENT가 아닌 상태에서 sentAt이 있으면 예외 발생")
+    fun create_sentAtWithNonSentStatus_throwsException() {
+        assertThatThrownBy {
+            Notification(
+                recipientId = RecipientId("user-1"),
+                notificationType = NotificationType.EMAIL,
+                title = "제목",
+                content = "내용",
+                referenceEventId = ReferenceEventId("event-1"),
+                sentAt = LocalDateTime.now()
+            )
+        }.isInstanceOf(IllegalArgumentException::class.java)
+            .hasMessageContaining("sentAt")
+    }
+
+    // === 잘못된 상태 전이 ===
+
     @Test
     @DisplayName("SENT 상태에서 startProcessing 호출 시 예외 발생")
     fun startProcessing_fromSent_throwsException() {

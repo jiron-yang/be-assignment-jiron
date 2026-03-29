@@ -26,6 +26,17 @@ class Notification(
     sentAt: LocalDateTime? = null
 ) {
 
+    init {
+        require(title.isNotBlank()) { "Title must not be blank" }
+        require(content.isNotBlank()) { "Content must not be blank" }
+        require(retryCount >= 0) { "Retry count must not be negative: $retryCount" }
+        require(maxRetryCount > 0) { "Max retry count must be positive: $maxRetryCount" }
+        require(retryCount <= maxRetryCount) { "Retry count($retryCount) must not exceed max($maxRetryCount)" }
+        require(sentAt == null || status == NotificationStatus.SENT) {
+            "sentAt must be null unless status is SENT"
+        }
+    }
+
     var status: NotificationStatus = status
         private set
 
