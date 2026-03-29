@@ -1,5 +1,6 @@
 package com.jiron.notification.adapter.out.persistence
 
+import com.jiron.notification.application.port.`in`.NotificationView
 import com.jiron.notification.domain.model.Notification
 
 /**
@@ -20,7 +21,6 @@ object NotificationMapper {
             maxRetryCount = entity.maxRetryCount,
             nextRetryAt = entity.nextRetryAt,
             referenceEventId = entity.referenceEventId,
-            createdAt = entity.createdAt,
             sentAt = entity.sentAt
         )
     }
@@ -38,8 +38,22 @@ object NotificationMapper {
             maxRetryCount = domain.maxRetryCount,
             nextRetryAt = domain.nextRetryAt,
             referenceEventId = domain.referenceEventId,
-            createdAt = domain.createdAt,
             sentAt = domain.sentAt
+        )
+    }
+
+    fun toView(entity: NotificationEntity): NotificationView {
+        return NotificationView(
+            id = entity.id,
+            recipientId = entity.recipientId,
+            notificationType = entity.notificationType,
+            status = entity.status,
+            title = entity.title,
+            content = entity.content,
+            retryCount = entity.retryCount,
+            referenceEventId = entity.referenceEventId,
+            createdAt = entity.createdAt,
+            sentAt = entity.sentAt
         )
     }
 }

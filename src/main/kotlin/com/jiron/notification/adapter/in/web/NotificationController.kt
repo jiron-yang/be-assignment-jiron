@@ -28,17 +28,17 @@ class NotificationController(
 
     /** 알림 발송 요청 */
     @PostMapping
-    fun send(@Valid @RequestBody request: SendNotificationRequest): ResponseEntity<NotificationResponse> {
-        val notification = sendNotificationUseCase.execute(request.toCommand())
-        return ResponseEntity.status(201).body(NotificationResponse.from(notification))
+    fun send(@Valid @RequestBody request: SendNotificationRequest): ResponseEntity<Map<String, Long>> {
+        val id = sendNotificationUseCase.execute(request.toCommand())
+        return ResponseEntity.status(201).body(mapOf("id" to id))
     }
 
     /** 알림 단건 조회 */
     @GetMapping("/{id}")
     fun findById(@PathVariable id: Long): ResponseEntity<NotificationResponse> {
-        val notification = getNotificationUseCase.findById(id)
+        val view = getNotificationUseCase.findById(id)
             ?: return ResponseEntity.notFound().build()
-        return ResponseEntity.ok(NotificationResponse.from(notification))
+        return ResponseEntity.ok(NotificationResponse.from(view))
     }
 
     /** 수신자별 알림 목록 조회 */

@@ -22,7 +22,7 @@ class NotificationControllerTest @Autowired constructor(
 ) {
 
     @Test
-    @DisplayName("POST /api/notifications → 201 Created")
+    @DisplayName("POST /api/notifications → 201 Created (id 반환)")
     fun send_returns201() {
         val request = SendNotificationRequest(
             recipientId = "ctrl-user-1",
@@ -37,15 +37,13 @@ class NotificationControllerTest @Autowired constructor(
             content = objectMapper.writeValueAsString(request)
         }.andExpect {
             status { isCreated() }
-            jsonPath("$.recipientId") { value("ctrl-user-1") }
-            jsonPath("$.notificationType") { value("EMAIL") }
+            jsonPath("$.id") { isNumber() }
         }
     }
 
     @Test
     @DisplayName("POST 필수 필드 누락 → 400 Bad Request")
     fun send_missingFields_returns400() {
-        // title 필드 누락
         val body = mapOf(
             "recipientId" to "user-1",
             "notificationType" to "EMAIL",
@@ -62,9 +60,8 @@ class NotificationControllerTest @Autowired constructor(
     }
 
     @Test
-    @DisplayName("GET /api/notifications/{id} → 200 OK")
+    @DisplayName("GET /api/notifications/{id} → 200 OK (createdAt 포함)")
     fun findById_returns200() {
-        // 먼저 알림 생성
         val request = SendNotificationRequest(
             recipientId = "ctrl-user-2",
             notificationType = NotificationType.IN_APP,
@@ -84,6 +81,7 @@ class NotificationControllerTest @Autowired constructor(
                 status { isOk() }
                 jsonPath("$.id") { value(id) }
                 jsonPath("$.recipientId") { value("ctrl-user-2") }
+                jsonPath("$.createdAt") { isNotEmpty() }
             }
     }
 
@@ -99,7 +97,6 @@ class NotificationControllerTest @Autowired constructor(
     @Test
     @DisplayName("GET /api/notifications?recipientId=xxx → 200 OK (목록)")
     fun findByRecipientId_returns200() {
-        // 알림 생성
         val request = SendNotificationRequest(
             recipientId = "ctrl-user-list",
             notificationType = NotificationType.EMAIL,

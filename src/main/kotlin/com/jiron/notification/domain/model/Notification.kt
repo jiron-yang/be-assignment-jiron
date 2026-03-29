@@ -19,7 +19,6 @@ class Notification(
     val maxRetryCount: Int = 3,
     var nextRetryAt: LocalDateTime = LocalDateTime.now(),
     val referenceEventId: String,
-    val createdAt: LocalDateTime = LocalDateTime.now(),
     var sentAt: LocalDateTime? = null
 ) {
 

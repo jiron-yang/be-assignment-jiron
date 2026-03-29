@@ -1,6 +1,6 @@
 package com.jiron.notification.adapter.`in`.web.dto
 
-import com.jiron.notification.domain.model.Notification
+import com.jiron.notification.application.port.`in`.NotificationView
 import com.jiron.notification.domain.vo.NotificationStatus
 import com.jiron.notification.domain.vo.NotificationType
 import java.time.LocalDateTime
@@ -21,18 +21,18 @@ data class NotificationResponse(
     val sentAt: LocalDateTime?
 ) {
     companion object {
-        fun from(notification: Notification): NotificationResponse {
+        fun from(view: NotificationView): NotificationResponse {
             return NotificationResponse(
-                id = notification.id,
-                recipientId = notification.recipientId,
-                notificationType = notification.notificationType,
-                status = notification.status,
-                title = notification.title,
-                content = notification.content,
-                retryCount = notification.retryCount,
-                referenceEventId = notification.referenceEventId,
-                createdAt = notification.createdAt,
-                sentAt = notification.sentAt
+                id = view.id,
+                recipientId = view.recipientId,
+                notificationType = view.notificationType,
+                status = view.status,
+                title = view.title,
+                content = view.content,
+                retryCount = view.retryCount,
+                referenceEventId = view.referenceEventId,
+                createdAt = view.createdAt,
+                sentAt = view.sentAt
             )
         }
     }

@@ -24,16 +24,14 @@ class NotificationServiceTest @Autowired constructor(
             referenceEventId = "event-service-1"
         )
 
-        val result = notificationService.execute(command)
+        val id = notificationService.execute(command)
 
-        assertThat(result.id).isGreaterThan(0)
-        assertThat(result.recipientId).isEqualTo("user-service-1")
-        assertThat(result.notificationType).isEqualTo(NotificationType.EMAIL)
+        assertThat(id).isGreaterThan(0)
     }
 
     @Test
-    @DisplayName("동일 멱등성 키로 중복 요청 시 기존 알림 반환 (id 동일)")
-    fun send_idempotent_returnsSameNotification() {
+    @DisplayName("동일 멱등성 키로 중복 요청 시 같은 id 반환")
+    fun send_idempotent_returnsSameId() {
         val command = SendNotificationCommand(
             recipientId = "user-idempotent-1",
             notificationType = NotificationType.EMAIL,
@@ -42,10 +40,10 @@ class NotificationServiceTest @Autowired constructor(
             referenceEventId = "event-idempotent-1"
         )
 
-        val first = notificationService.execute(command)
-        val second = notificationService.execute(command)
+        val firstId = notificationService.execute(command)
+        val secondId = notificationService.execute(command)
 
-        assertThat(first.id).isEqualTo(second.id)
+        assertThat(firstId).isEqualTo(secondId)
     }
 
     @Test
@@ -54,5 +52,25 @@ class NotificationServiceTest @Autowired constructor(
         val result = notificationService.findById(999999L)
 
         assertThat(result).isNull()
+    }
+
+    @Test
+    @DisplayName("등록 후 조회 시 NotificationView 반환 (createdAt 포함)")
+    fun findById_returnsView() {
+        val command = SendNotificationCommand(
+            recipientId = "user-view-1",
+            notificationType = NotificationType.IN_APP,
+            title = "조회 테스트",
+            content = "내용",
+            referenceEventId = "event-view-1"
+        )
+
+        val id = notificationService.execute(command)
+        val view = notificationService.findById(id)
+
+        assertThat(view).isNotNull
+        assertThat(view!!.id).isEqualTo(id)
+        assertThat(view.createdAt).isNotNull()
+        assertThat(view.recipientId).isEqualTo("user-view-1")
     }
 }

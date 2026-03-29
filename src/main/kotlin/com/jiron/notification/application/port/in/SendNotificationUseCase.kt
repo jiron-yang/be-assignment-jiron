@@ -1,6 +1,5 @@
 package com.jiron.notification.application.port.`in`
 
-import com.jiron.notification.domain.model.Notification
 import com.jiron.notification.domain.vo.NotificationIdempotencyKey
 import com.jiron.notification.domain.vo.NotificationType
 
@@ -8,7 +7,7 @@ import com.jiron.notification.domain.vo.NotificationType
  * 알림 발송 요청 유즈케이스
  */
 interface SendNotificationUseCase {
-    fun execute(command: SendNotificationCommand): Notification
+    fun execute(command: SendNotificationCommand): Long
 }
 
 /**
