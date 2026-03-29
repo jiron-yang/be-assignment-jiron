@@ -17,20 +17,25 @@ class DbNotificationQueue(
 ) : NotificationQueue {
 
     override fun enqueue(notification: Notification): Notification {
-        return notificationJpaRepository.save(notification)
+        val entity = NotificationMapper.toEntity(notification)
+        val saved = notificationJpaRepository.save(entity)
+        return NotificationMapper.toDomain(saved)
     }
 
     @Transactional
     override fun dequeueForProcessing(batchSize: Int): List<Notification> {
-        val notifications = notificationJpaRepository.findAllByStatusAndNextRetryAtBeforeOrderByNextRetryAtAsc(
+        val entities = notificationJpaRepository.findAllByStatusAndNextRetryAtBeforeOrderByNextRetryAtAsc(
             NotificationStatus.PENDING,
             LocalDateTime.now(),
             PageRequest.of(0, batchSize)
         )
 
-        return notifications.map { notification ->
-            notification.startProcessing()
-            notificationJpaRepository.save(notification)
+        return entities.map { entity ->
+            val domain = NotificationMapper.toDomain(entity)
+            domain.startProcessing()
+            val updatedEntity = NotificationMapper.toEntity(domain)
+            val saved = notificationJpaRepository.save(updatedEntity)
+            NotificationMapper.toDomain(saved)
         }
     }
 }

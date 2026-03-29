@@ -1,6 +1,5 @@
 package com.jiron.notification.infrastructure.persistence
 
-import com.jiron.notification.domain.Notification
 import com.jiron.notification.domain.NotificationStatus
 import com.jiron.notification.domain.NotificationType
 import org.springframework.data.domain.Page
@@ -11,32 +10,32 @@ import java.time.LocalDateTime
 /**
  * 알림 JPA 레포지토리
  */
-interface NotificationJpaRepository : JpaRepository<Notification, Long> {
+interface NotificationJpaRepository : JpaRepository<NotificationEntity, Long> {
 
     fun findAllByStatusAndNextRetryAtBefore(
         status: NotificationStatus,
         now: LocalDateTime
-    ): List<Notification>
+    ): List<NotificationEntity>
 
     fun findAllByStatusAndNextRetryAtBeforeOrderByNextRetryAtAsc(
         status: NotificationStatus,
         now: LocalDateTime,
         pageable: Pageable
-    ): List<Notification>
+    ): List<NotificationEntity>
 
     fun findAllByStatusAndUpdatedAtBefore(
         status: NotificationStatus,
         before: LocalDateTime
-    ): List<Notification>
+    ): List<NotificationEntity>
 
     fun findAllByRecipientId(
         recipientId: String,
         pageable: Pageable
-    ): Page<Notification>
+    ): Page<NotificationEntity>
 
     fun findByRecipientIdAndNotificationTypeAndReferenceEventId(
         recipientId: String,
         notificationType: NotificationType,
         referenceEventId: String
-    ): Notification?
+    ): NotificationEntity?
 }
