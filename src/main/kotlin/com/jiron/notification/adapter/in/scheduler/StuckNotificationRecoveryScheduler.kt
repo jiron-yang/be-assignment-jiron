@@ -1,4 +1,4 @@
-package com.jiron.notification.scheduler
+package com.jiron.notification.adapter.`in`.scheduler
 
 import com.jiron.notification.application.port.out.NotificationRepository
 import org.slf4j.LoggerFactory

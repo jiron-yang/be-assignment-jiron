@@ -1,4 +1,4 @@
-package com.jiron.notification.infrastructure.channel
+package com.jiron.notification.adapter.out.channel
 
 import com.jiron.notification.application.port.out.NotificationChannel
 import com.jiron.notification.domain.model.Notification

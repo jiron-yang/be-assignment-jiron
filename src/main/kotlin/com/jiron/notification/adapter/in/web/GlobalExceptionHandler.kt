@@ -1,4 +1,4 @@
-package com.jiron.notification.api
+package com.jiron.notification.adapter.`in`.web
 
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.MethodArgumentNotValidException

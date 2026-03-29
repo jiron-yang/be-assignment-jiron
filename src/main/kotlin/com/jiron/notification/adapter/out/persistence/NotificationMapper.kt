@@ -1,4 +1,4 @@
-package com.jiron.notification.infrastructure.persistence
+package com.jiron.notification.adapter.out.persistence
 
 import com.jiron.notification.domain.model.Notification
 

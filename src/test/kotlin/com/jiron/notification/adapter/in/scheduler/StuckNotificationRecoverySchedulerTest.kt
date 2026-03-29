@@ -1,9 +1,9 @@
-package com.jiron.notification.scheduler
+package com.jiron.notification.adapter.`in`.scheduler
 
+import com.jiron.notification.adapter.out.persistence.NotificationEntity
+import com.jiron.notification.adapter.out.persistence.NotificationJpaRepository
 import com.jiron.notification.domain.vo.NotificationStatus
 import com.jiron.notification.domain.vo.NotificationType
-import com.jiron.notification.infrastructure.persistence.NotificationEntity
-import com.jiron.notification.infrastructure.persistence.NotificationJpaRepository
 import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName

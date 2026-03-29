@@ -1,9 +1,8 @@
 package com.jiron.notification.application.service
 
-import com.jiron.notification.api.dto.SendNotificationRequest
+import com.jiron.notification.application.port.`in`.SendNotificationCommand
 import com.jiron.notification.domain.vo.NotificationType
 import org.assertj.core.api.Assertions.assertThat
-import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
@@ -17,7 +16,7 @@ class NotificationServiceTest @Autowired constructor(
     @Test
     @DisplayName("알림 등록 성공")
     fun send_success() {
-        val request = SendNotificationRequest(
+        val command = SendNotificationCommand(
             recipientId = "user-service-1",
             notificationType = NotificationType.EMAIL,
             title = "환영합니다",
@@ -25,7 +24,7 @@ class NotificationServiceTest @Autowired constructor(
             referenceEventId = "event-service-1"
         )
 
-        val result = notificationService.send(request)
+        val result = notificationService.send(command)
 
         assertThat(result.id).isGreaterThan(0)
         assertThat(result.recipientId).isEqualTo("user-service-1")
@@ -35,7 +34,7 @@ class NotificationServiceTest @Autowired constructor(
     @Test
     @DisplayName("동일 멱등성 키로 중복 요청 시 기존 알림 반환 (id 동일)")
     fun send_idempotent_returnsSameNotification() {
-        val request = SendNotificationRequest(
+        val command = SendNotificationCommand(
             recipientId = "user-idempotent-1",
             notificationType = NotificationType.EMAIL,
             title = "제목",
@@ -43,8 +42,8 @@ class NotificationServiceTest @Autowired constructor(
             referenceEventId = "event-idempotent-1"
         )
 
-        val first = notificationService.send(request)
-        val second = notificationService.send(request)
+        val first = notificationService.send(command)
+        val second = notificationService.send(command)
 
         assertThat(first.id).isEqualTo(second.id)
     }

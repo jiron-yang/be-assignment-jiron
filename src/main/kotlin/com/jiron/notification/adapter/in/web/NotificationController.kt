@@ -1,8 +1,9 @@
-package com.jiron.notification.api
+package com.jiron.notification.adapter.`in`.web
 
-import com.jiron.notification.api.dto.NotificationResponse
-import com.jiron.notification.api.dto.SendNotificationRequest
-import com.jiron.notification.application.service.NotificationService
+import com.jiron.notification.adapter.`in`.web.dto.NotificationResponse
+import com.jiron.notification.adapter.`in`.web.dto.SendNotificationRequest
+import com.jiron.notification.application.port.`in`.GetNotificationUseCase
+import com.jiron.notification.application.port.`in`.SendNotificationUseCase
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
@@ -21,20 +22,21 @@ import org.springframework.web.bind.annotation.RestController
 @RestController
 @RequestMapping("/api/notifications")
 class NotificationController(
-    private val notificationService: NotificationService
+    private val sendNotificationUseCase: SendNotificationUseCase,
+    private val getNotificationUseCase: GetNotificationUseCase
 ) {
 
     /** 알림 발송 요청 */
     @PostMapping
     fun send(@Valid @RequestBody request: SendNotificationRequest): ResponseEntity<NotificationResponse> {
-        val notification = notificationService.send(request)
+        val notification = sendNotificationUseCase.send(request.toCommand())
         return ResponseEntity.status(201).body(NotificationResponse.from(notification))
     }
 
     /** 알림 단건 조회 */
     @GetMapping("/{id}")
     fun findById(@PathVariable id: Long): ResponseEntity<NotificationResponse> {
-        val notification = notificationService.findById(id)
+        val notification = getNotificationUseCase.findById(id)
             ?: return ResponseEntity.notFound().build()
         return ResponseEntity.ok(NotificationResponse.from(notification))
     }
@@ -45,7 +47,7 @@ class NotificationController(
         @RequestParam recipientId: String,
         pageable: Pageable
     ): ResponseEntity<Page<NotificationResponse>> {
-        val page = notificationService.findByRecipientId(recipientId, pageable)
+        val page = getNotificationUseCase.findByRecipientId(recipientId, pageable)
         return ResponseEntity.ok(page.map { NotificationResponse.from(it) })
     }
 }

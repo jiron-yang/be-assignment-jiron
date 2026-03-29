@@ -1,4 +1,4 @@
-package com.jiron.notification.api.dto
+package com.jiron.notification.adapter.`in`.web.dto
 
 import com.jiron.notification.domain.model.Notification
 import com.jiron.notification.domain.vo.NotificationStatus

@@ -1,7 +1,7 @@
-package com.jiron.notification.api
+package com.jiron.notification.adapter.`in`.web
 
 import com.fasterxml.jackson.databind.ObjectMapper
-import com.jiron.notification.api.dto.SendNotificationRequest
+import com.jiron.notification.adapter.`in`.web.dto.SendNotificationRequest
 import com.jiron.notification.domain.vo.NotificationType
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.DisplayName
