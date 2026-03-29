@@ -97,6 +97,17 @@ class Notification(
     }
 
     /**
+     * PROCESSING 상태에서 PENDING으로 복구 (stuck 상태 복구용)
+     */
+    fun resetToPending() {
+        require(status == NotificationStatus.PROCESSING) {
+            "Cannot reset to pending: current status is $status, expected PROCESSING"
+        }
+        status = NotificationStatus.PENDING
+        updatedAt = LocalDateTime.now()
+    }
+
+    /**
      * 재시도 스케줄링: PROCESSING → PENDING (retryCount 증가)
      */
     fun scheduleRetry(nextRetryAt: LocalDateTime) {

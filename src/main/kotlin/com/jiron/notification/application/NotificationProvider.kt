@@ -1,11 +1,13 @@
 package com.jiron.notification.application
 
 import com.jiron.notification.domain.Notification
+import com.jiron.notification.domain.NotificationStatus
 import com.jiron.notification.domain.NotificationType
 import com.jiron.notification.infrastructure.persistence.NotificationJpaRepository
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
+import java.time.LocalDateTime
 
 /**
  * 알림 Provider 레이어
@@ -26,6 +28,12 @@ class NotificationProvider(
 
     fun findByRecipientId(recipientId: String, pageable: Pageable): Page<Notification> {
         return notificationJpaRepository.findAllByRecipientId(recipientId, pageable)
+    }
+
+    fun findStuckProcessing(before: LocalDateTime): List<Notification> {
+        return notificationJpaRepository.findAllByStatusAndUpdatedAtBefore(
+            NotificationStatus.PROCESSING, before
+        )
     }
 
     fun findByIdempotencyKey(
