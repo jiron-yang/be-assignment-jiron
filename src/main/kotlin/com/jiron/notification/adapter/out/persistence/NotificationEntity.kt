@@ -2,6 +2,7 @@ package com.jiron.notification.adapter.out.persistence
 
 import com.jiron.notification.domain.vo.NotificationStatus
 import com.jiron.notification.domain.vo.NotificationType
+import com.jiron.notification.domain.vo.RetryPolicy
 import jakarta.persistence.Column
 import jakarta.persistence.Entity
 import jakarta.persistence.EnumType
@@ -48,7 +49,7 @@ class NotificationEntity(
     var retryCount: Int = 0,
 
     @Column(name = "max_retry_count", nullable = false)
-    val maxRetryCount: Int = 3,
+    val maxRetryCount: Int = RetryPolicy.MAX_RETRY_COUNT,
 
     @Column(name = "next_retry_at", nullable = false)
     var nextRetryAt: LocalDateTime = LocalDateTime.now(),

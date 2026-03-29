@@ -2,6 +2,7 @@ package com.jiron.notification.domain.model
 
 import com.jiron.notification.domain.vo.NotificationStatus
 import com.jiron.notification.domain.vo.NotificationType
+import com.jiron.notification.domain.vo.RetryPolicy
 import java.time.LocalDateTime
 
 /**
@@ -16,7 +17,7 @@ class Notification(
     val content: String,
     var status: NotificationStatus = NotificationStatus.PENDING,
     var retryCount: Int = 0,
-    val maxRetryCount: Int = 3,
+    val maxRetryCount: Int = RetryPolicy.MAX_RETRY_COUNT,
     var nextRetryAt: LocalDateTime = LocalDateTime.now(),
     val referenceEventId: String,
     var sentAt: LocalDateTime? = null
