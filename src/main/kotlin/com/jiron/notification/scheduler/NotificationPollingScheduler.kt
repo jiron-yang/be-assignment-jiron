@@ -20,12 +20,12 @@ class NotificationPollingScheduler(
 
     @Scheduled(fixedDelay = 5000)
     fun poll() {
-        logger.info("Polling for pending notifications...")
+        logger.debug("Polling for pending notifications...")
         val notifications = notificationQueue.dequeueForProcessing(batchSize = 10)
         if (notifications.isNotEmpty()) {
-            logger.info("Found ${notifications.size} notifications to process")
+            logger.info("Processing {} pending notifications", notifications.size)
             notificationSender.sendAll(notifications)
+            logger.info("Completed processing {} notifications", notifications.size)
         }
-        logger.info("Polling completed. Processed ${notifications.size} notifications")
     }
 }

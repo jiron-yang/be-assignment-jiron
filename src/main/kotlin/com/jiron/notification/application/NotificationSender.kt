@@ -5,6 +5,7 @@ import com.jiron.notification.domain.NotificationChannel
 import com.jiron.notification.domain.RetryPolicy
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
@@ -21,6 +22,7 @@ class NotificationSender(
     /**
      * 알림 목록 일괄 발송
      */
+    @Transactional
     fun sendAll(notifications: List<Notification>) {
         for (notification in notifications) {
             try {

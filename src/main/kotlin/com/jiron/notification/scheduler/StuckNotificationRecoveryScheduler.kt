@@ -4,6 +4,7 @@ import com.jiron.notification.application.NotificationProvider
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 /**
@@ -17,6 +18,7 @@ class StuckNotificationRecoveryScheduler(
 
     private val logger = LoggerFactory.getLogger(StuckNotificationRecoveryScheduler::class.java)
 
+    @Transactional
     @Scheduled(fixedDelay = 60000)
     fun recover() {
         val threshold = LocalDateTime.now().minusMinutes(5)

@@ -18,6 +18,12 @@ interface NotificationJpaRepository : JpaRepository<Notification, Long> {
         now: LocalDateTime
     ): List<Notification>
 
+    fun findAllByStatusAndNextRetryAtBeforeOrderByNextRetryAtAsc(
+        status: NotificationStatus,
+        now: LocalDateTime,
+        pageable: Pageable
+    ): List<Notification>
+
     fun findAllByStatusAndUpdatedAtBefore(
         status: NotificationStatus,
         before: LocalDateTime
