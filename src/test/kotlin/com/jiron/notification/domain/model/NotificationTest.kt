@@ -2,6 +2,8 @@ package com.jiron.notification.domain.model
 
 import com.jiron.notification.domain.vo.NotificationStatus
 import com.jiron.notification.domain.vo.NotificationType
+import com.jiron.notification.domain.vo.RecipientId
+import com.jiron.notification.domain.vo.ReferenceEventId
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName
@@ -15,12 +17,11 @@ class NotificationTest {
         status: NotificationStatus = NotificationStatus.PENDING
     ): Notification {
         val notification = Notification(
-            recipientId = "user-1",
+            recipientId = RecipientId("user-1"),
             notificationType = NotificationType.EMAIL,
-            channel = "EMAIL",
             title = "테스트 제목",
             content = "테스트 내용",
-            referenceEventId = "event-1"
+            referenceEventId = ReferenceEventId("event-1")
         )
         // 상태를 원하는 값으로 설정
         if (status == NotificationStatus.PROCESSING) {
@@ -61,16 +62,57 @@ class NotificationTest {
     }
 
     @Test
-    @DisplayName("PROCESSING → PENDING 재시도 스케줄링 성공, retryCount 증가")
-    fun scheduleRetry_success() {
+    @DisplayName("발송 실패 시 재시도 가능하면 PENDING으로 전이, retryCount 증가")
+    fun handleSendFailure_retryAvailable() {
         val notification = createNotification(NotificationStatus.PROCESSING)
-        val nextRetryAt = LocalDateTime.now().plusMinutes(5)
+        val now = LocalDateTime.now()
 
-        notification.scheduleRetry(nextRetryAt)
+        notification.handleSendFailure(now)
 
         assertThat(notification.status).isEqualTo(NotificationStatus.PENDING)
         assertThat(notification.retryCount).isEqualTo(1)
-        assertThat(notification.nextRetryAt).isEqualTo(nextRetryAt)
+        assertThat(notification.nextRetryAt).isAfter(now)
+    }
+
+    @Test
+    @DisplayName("발송 실패 시 재시도 불가하면 FAILED로 전이")
+    fun handleSendFailure_maxRetriesExceeded() {
+        val notification = Notification(
+            recipientId = RecipientId("user-1"),
+            notificationType = NotificationType.EMAIL,
+            title = "테스트 제목",
+            content = "테스트 내용",
+            referenceEventId = ReferenceEventId("event-1"),
+            retryCount = 3
+        )
+        notification.startProcessing()
+
+        notification.handleSendFailure(LocalDateTime.now())
+
+        assertThat(notification.status).isEqualTo(NotificationStatus.FAILED)
+    }
+
+    @Test
+    @DisplayName("canRetry는 retryCount < maxRetryCount일 때 true")
+    fun canRetry_returnsTrue() {
+        val notification = createNotification()
+
+        assertThat(notification.canRetry()).isTrue()
+    }
+
+    @Test
+    @DisplayName("canRetry는 retryCount >= maxRetryCount일 때 false")
+    fun canRetry_returnsFalse() {
+        val notification = Notification(
+            recipientId = RecipientId("user-1"),
+            notificationType = NotificationType.EMAIL,
+            title = "테스트 제목",
+            content = "테스트 내용",
+            referenceEventId = ReferenceEventId("event-1"),
+            retryCount = 3
+        )
+
+        assertThat(notification.canRetry()).isFalse()
     }
 
     @Test

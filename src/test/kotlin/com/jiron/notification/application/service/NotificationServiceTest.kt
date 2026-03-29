@@ -2,6 +2,8 @@ package com.jiron.notification.application.service
 
 import com.jiron.notification.application.port.`in`.SendNotificationCommand
 import com.jiron.notification.domain.vo.NotificationType
+import com.jiron.notification.domain.vo.RecipientId
+import com.jiron.notification.domain.vo.ReferenceEventId
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
@@ -17,11 +19,11 @@ class NotificationServiceTest @Autowired constructor(
     @DisplayName("알림 등록 성공")
     fun send_success() {
         val command = SendNotificationCommand(
-            recipientId = "user-service-1",
+            recipientId = RecipientId("user-service-1"),
             notificationType = NotificationType.EMAIL,
             title = "환영합니다",
             content = "가입을 축하합니다",
-            referenceEventId = "event-service-1"
+            referenceEventId = ReferenceEventId("event-service-1")
         )
 
         val id = notificationService.execute(command)
@@ -33,11 +35,11 @@ class NotificationServiceTest @Autowired constructor(
     @DisplayName("동일 멱등성 키로 중복 요청 시 같은 id 반환")
     fun send_idempotent_returnsSameId() {
         val command = SendNotificationCommand(
-            recipientId = "user-idempotent-1",
+            recipientId = RecipientId("user-idempotent-1"),
             notificationType = NotificationType.EMAIL,
             title = "제목",
             content = "내용",
-            referenceEventId = "event-idempotent-1"
+            referenceEventId = ReferenceEventId("event-idempotent-1")
         )
 
         val firstId = notificationService.execute(command)
@@ -58,11 +60,11 @@ class NotificationServiceTest @Autowired constructor(
     @DisplayName("등록 후 조회 시 NotificationView 반환 (createdAt 포함)")
     fun findById_returnsView() {
         val command = SendNotificationCommand(
-            recipientId = "user-view-1",
+            recipientId = RecipientId("user-view-1"),
             notificationType = NotificationType.IN_APP,
             title = "조회 테스트",
             content = "내용",
-            referenceEventId = "event-view-1"
+            referenceEventId = ReferenceEventId("event-view-1")
         )
 
         val id = notificationService.execute(command)

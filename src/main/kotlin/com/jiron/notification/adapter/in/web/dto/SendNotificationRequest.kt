@@ -2,6 +2,8 @@ package com.jiron.notification.adapter.`in`.web.dto
 
 import com.jiron.notification.application.port.`in`.SendNotificationCommand
 import com.jiron.notification.domain.vo.NotificationType
+import com.jiron.notification.domain.vo.RecipientId
+import com.jiron.notification.domain.vo.ReferenceEventId
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 
@@ -17,11 +19,11 @@ data class SendNotificationRequest(
 ) {
     fun toCommand(): SendNotificationCommand {
         return SendNotificationCommand(
-            recipientId = recipientId,
+            recipientId = RecipientId(recipientId),
             notificationType = notificationType,
             title = title,
             content = content,
-            referenceEventId = referenceEventId
+            referenceEventId = ReferenceEventId(referenceEventId)
         )
     }
 }

@@ -68,7 +68,7 @@ class StuckNotificationRecoverySchedulerTest @Autowired constructor(
         return NotificationEntity(
             recipientId = "test-recipient",
             notificationType = NotificationType.EMAIL,
-            channel = "EMAIL",
+            channel = NotificationType.EMAIL.name,
             title = "Test Title",
             content = "Test Content",
             referenceEventId = referenceEventId

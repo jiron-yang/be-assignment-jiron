@@ -15,7 +15,7 @@ class EmailNotificationChannel : NotificationChannel {
     private val logger = LoggerFactory.getLogger(EmailNotificationChannel::class.java)
 
     override fun send(notification: Notification) {
-        logger.info("Email sent to ${notification.recipientId}: ${notification.title}")
+        logger.info("Email sent to ${notification.recipientId.value}: ${notification.title}")
     }
 
     override fun supports(type: NotificationType): Boolean {

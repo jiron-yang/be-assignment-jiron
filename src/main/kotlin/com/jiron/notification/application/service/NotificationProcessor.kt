@@ -5,10 +5,10 @@ import com.jiron.notification.application.port.out.NotificationChannel
 import com.jiron.notification.application.port.out.NotificationQueue
 import com.jiron.notification.application.port.out.NotificationRepository
 import com.jiron.notification.domain.model.Notification
-import com.jiron.notification.domain.vo.RetryPolicy
+import com.jiron.notification.domain.vo.NotificationStatus
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Service
-import org.springframework.transaction.annotation.Transactional
+import org.springframework.transaction.support.TransactionTemplate
 import java.time.LocalDateTime
 
 /**
@@ -18,18 +18,22 @@ import java.time.LocalDateTime
 class NotificationProcessor(
     private val notificationQueue: NotificationQueue,
     private val channels: List<NotificationChannel>,
-    private val notificationRepository: NotificationRepository
+    private val notificationRepository: NotificationRepository,
+    private val transactionTemplate: TransactionTemplate
 ) : ProcessPendingNotificationsUseCase {
 
     private val logger = LoggerFactory.getLogger(NotificationProcessor::class.java)
 
-    @Transactional
     override fun execute() {
         val notifications = notificationQueue.dequeueForProcessing(batchSize = 10)
         if (notifications.isEmpty()) return
 
         logger.info("Processing {} pending notifications", notifications.size)
-        notifications.forEach { sendOne(it) }
+        notifications.forEach { notification ->
+            transactionTemplate.executeWithoutResult {
+                sendOne(notification)
+            }
+        }
         logger.info("Completed processing {} notifications", notifications.size)
     }
 
@@ -55,17 +59,11 @@ class NotificationProcessor(
 
     private fun handleFailure(notification: Notification) {
         try {
-            val nextRetryAt = RetryPolicy.calculateNextRetryAt(
-                notification.retryCount,
-                LocalDateTime.now()
-            )
-            if (nextRetryAt != null) {
-                notification.scheduleRetry(nextRetryAt)
-                notificationRepository.save(notification)
+            notification.handleSendFailure(LocalDateTime.now())
+            notificationRepository.save(notification)
+            if (notification.status == NotificationStatus.PENDING) {
                 logger.info("Notification scheduled for retry: id=${notification.id}, retryCount=${notification.retryCount}")
             } else {
-                notification.markFailed()
-                notificationRepository.save(notification)
                 logger.warn("Notification max retries exceeded: id=${notification.id}")
             }
         } catch (retryError: Exception) {

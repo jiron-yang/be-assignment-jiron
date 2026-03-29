@@ -2,6 +2,8 @@ package com.jiron.notification.domain.model
 
 import com.jiron.notification.domain.vo.NotificationStatus
 import com.jiron.notification.domain.vo.NotificationType
+import com.jiron.notification.domain.vo.RecipientId
+import com.jiron.notification.domain.vo.ReferenceEventId
 import com.jiron.notification.domain.vo.RetryPolicy
 import java.time.LocalDateTime
 
@@ -12,16 +14,15 @@ import java.time.LocalDateTime
  */
 class Notification(
     val id: Long = 0L,
-    val recipientId: String,
+    val recipientId: RecipientId,
     val notificationType: NotificationType,
-    val channel: String,
     val title: String,
     val content: String,
     status: NotificationStatus = NotificationStatus.PENDING,
     retryCount: Int = 0,
     val maxRetryCount: Int = RetryPolicy.MAX_RETRY_COUNT,
     nextRetryAt: LocalDateTime = LocalDateTime.now(),
-    val referenceEventId: String,
+    val referenceEventId: ReferenceEventId,
     sentAt: LocalDateTime? = null
 ) {
 
@@ -79,14 +80,24 @@ class Notification(
     }
 
     /**
-     * 재시도 스케줄링: PROCESSING → PENDING (retryCount 증가)
+     * 발송 실패 시 재시도 가능 여부를 판단하여 재시도 스케줄링 또는 최종 실패 처리
      */
-    fun scheduleRetry(nextRetryAt: LocalDateTime) {
+    fun handleSendFailure(now: LocalDateTime) {
         require(status == NotificationStatus.PROCESSING) {
-            "Cannot schedule retry: current status is $status, expected PROCESSING"
+            "Cannot handle failure: current status is $status, expected PROCESSING"
         }
-        retryCount++
-        this.nextRetryAt = nextRetryAt
-        status = NotificationStatus.PENDING
+        val nextRetry = RetryPolicy.calculateNextRetryAt(retryCount, now)
+        if (nextRetry != null) {
+            retryCount++
+            nextRetryAt = nextRetry
+            status = NotificationStatus.PENDING
+        } else {
+            status = NotificationStatus.FAILED
+        }
     }
+
+    /**
+     * 재시도 가능 여부 확인
+     */
+    fun canRetry(): Boolean = retryCount < maxRetryCount
 }

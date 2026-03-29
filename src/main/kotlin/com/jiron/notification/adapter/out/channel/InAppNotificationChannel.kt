@@ -15,7 +15,7 @@ class InAppNotificationChannel : NotificationChannel {
     private val logger = LoggerFactory.getLogger(InAppNotificationChannel::class.java)
 
     override fun send(notification: Notification) {
-        logger.info("In-app notification sent to ${notification.recipientId}: ${notification.title}")
+        logger.info("In-app notification sent to ${notification.recipientId.value}: ${notification.title}")
     }
 
     override fun supports(type: NotificationType): Boolean {

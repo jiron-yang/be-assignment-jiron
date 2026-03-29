@@ -29,7 +29,7 @@ class JpaNotificationRepository(
 
     override fun findByIdempotencyKey(key: NotificationIdempotencyKey): Notification? {
         return notificationJpaRepository.findByRecipientIdAndNotificationTypeAndReferenceEventId(
-            key.recipientId, key.notificationType, key.referenceEventId
+            key.recipientId.value, key.notificationType, key.referenceEventId.value
         )?.let { NotificationMapper.toDomain(it) }
     }
 

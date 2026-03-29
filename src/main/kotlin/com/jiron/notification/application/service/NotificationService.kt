@@ -5,7 +5,6 @@ import com.jiron.notification.application.port.`in`.NotificationView
 import com.jiron.notification.application.port.`in`.SendNotificationCommand
 import com.jiron.notification.application.port.`in`.SendNotificationUseCase
 import com.jiron.notification.application.port.out.NotificationQueryPort
-import com.jiron.notification.application.port.out.NotificationQueue
 import com.jiron.notification.application.port.out.NotificationRepository
 import com.jiron.notification.domain.model.Notification
 import org.slf4j.LoggerFactory
@@ -20,7 +19,6 @@ import org.springframework.transaction.annotation.Transactional
  */
 @Service
 class NotificationService(
-    private val notificationQueue: NotificationQueue,
     private val notificationRepository: NotificationRepository,
     private val notificationQueryPort: NotificationQueryPort
 ) : SendNotificationUseCase, GetNotificationUseCase {
@@ -41,14 +39,13 @@ class NotificationService(
         val notification = Notification(
             recipientId = command.recipientId,
             notificationType = command.notificationType,
-            channel = command.notificationType.name,
             title = command.title,
             content = command.content,
             referenceEventId = command.referenceEventId
         )
 
         return try {
-            notificationQueue.enqueue(notification).id
+            notificationRepository.save(notification).id
         } catch (e: DataIntegrityViolationException) {
             logger.info("Duplicate notification request detected, returning existing: recipientId={}, type={}, eventId={}",
                 command.recipientId, command.notificationType, command.referenceEventId)
