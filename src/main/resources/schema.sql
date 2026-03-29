@@ -1,4 +1,4 @@
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
     recipient_id VARCHAR(255) NOT NULL,
     notification_type VARCHAR(50) NOT NULL,
@@ -16,5 +16,5 @@ CREATE TABLE notifications (
     CONSTRAINT uk_notification_idempotency UNIQUE (recipient_id, notification_type, reference_event_id)
 );
 
-CREATE INDEX idx_notifications_polling ON notifications (status, next_retry_at);
-CREATE INDEX idx_notifications_recipient ON notifications (recipient_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_polling ON notifications (status, next_retry_at);
+CREATE INDEX IF NOT EXISTS idx_notifications_recipient ON notifications (recipient_id);

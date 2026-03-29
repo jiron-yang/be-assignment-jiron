@@ -28,7 +28,7 @@ class NotificationController(
     @PostMapping
     fun send(@Valid @RequestBody request: SendNotificationRequest): ResponseEntity<NotificationResponse> {
         val notification = notificationService.send(request)
-        return ResponseEntity.ok(NotificationResponse.from(notification))
+        return ResponseEntity.status(201).body(NotificationResponse.from(notification))
     }
 
     /** 알림 단건 조회 */
