@@ -1,8 +1,6 @@
 package com.jiron.notification.adapter.`in`.scheduler
 
-import com.jiron.notification.application.port.out.NotificationQueue
-import com.jiron.notification.application.service.NotificationSender
-import org.slf4j.LoggerFactory
+import com.jiron.notification.application.port.`in`.ProcessPendingNotificationsUseCase
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
 
@@ -12,20 +10,11 @@ import org.springframework.stereotype.Component
  */
 @Component
 class NotificationPollingScheduler(
-    private val notificationQueue: NotificationQueue,
-    private val notificationSender: NotificationSender
+    private val processPendingNotificationsUseCase: ProcessPendingNotificationsUseCase
 ) {
-
-    private val logger = LoggerFactory.getLogger(NotificationPollingScheduler::class.java)
 
     @Scheduled(fixedDelay = 5000)
     fun poll() {
-        logger.debug("Polling for pending notifications...")
-        val notifications = notificationQueue.dequeueForProcessing(batchSize = 10)
-        if (notifications.isNotEmpty()) {
-            logger.info("Processing {} pending notifications", notifications.size)
-            notificationSender.sendAll(notifications)
-            logger.info("Completed processing {} notifications", notifications.size)
-        }
+        processPendingNotificationsUseCase.execute()
     }
 }

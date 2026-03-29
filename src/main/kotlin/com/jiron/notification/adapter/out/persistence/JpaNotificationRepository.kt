@@ -2,8 +2,8 @@ package com.jiron.notification.adapter.out.persistence
 
 import com.jiron.notification.application.port.out.NotificationRepository
 import com.jiron.notification.domain.model.Notification
+import com.jiron.notification.domain.vo.NotificationIdempotencyKey
 import com.jiron.notification.domain.vo.NotificationStatus
-import com.jiron.notification.domain.vo.NotificationType
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
@@ -39,13 +39,9 @@ class JpaNotificationRepository(
         ).map { NotificationMapper.toDomain(it) }
     }
 
-    override fun findByIdempotencyKey(
-        recipientId: String,
-        notificationType: NotificationType,
-        referenceEventId: String
-    ): Notification? {
+    override fun findByIdempotencyKey(key: NotificationIdempotencyKey): Notification? {
         return notificationJpaRepository.findByRecipientIdAndNotificationTypeAndReferenceEventId(
-            recipientId, notificationType, referenceEventId
+            key.recipientId, key.notificationType, key.referenceEventId
         )?.let { NotificationMapper.toDomain(it) }
     }
 }

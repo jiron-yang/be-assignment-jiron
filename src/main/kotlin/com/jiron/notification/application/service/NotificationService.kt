@@ -30,11 +30,7 @@ class NotificationService(
      */
     @Transactional
     override fun execute(command: SendNotificationCommand): Notification {
-        val existing = notificationRepository.findByIdempotencyKey(
-            command.recipientId,
-            command.notificationType,
-            command.referenceEventId
-        )
+        val existing = notificationRepository.findByIdempotencyKey(command.idempotencyKey)
         if (existing != null) {
             return existing
         }
@@ -53,11 +49,7 @@ class NotificationService(
         } catch (e: DataIntegrityViolationException) {
             logger.info("Duplicate notification request detected, returning existing: recipientId={}, type={}, eventId={}",
                 command.recipientId, command.notificationType, command.referenceEventId)
-            notificationRepository.findByIdempotencyKey(
-                command.recipientId,
-                command.notificationType,
-                command.referenceEventId
-            ) ?: throw e
+            notificationRepository.findByIdempotencyKey(command.idempotencyKey) ?: throw e
         }
     }
 

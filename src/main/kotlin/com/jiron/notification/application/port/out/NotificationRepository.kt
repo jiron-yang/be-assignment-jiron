@@ -1,7 +1,7 @@
 package com.jiron.notification.application.port.out
 
 import com.jiron.notification.domain.model.Notification
-import com.jiron.notification.domain.vo.NotificationType
+import com.jiron.notification.domain.vo.NotificationIdempotencyKey
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import java.time.LocalDateTime
@@ -14,5 +14,5 @@ interface NotificationRepository {
     fun findById(id: Long): Notification?
     fun findByRecipientId(recipientId: String, pageable: Pageable): Page<Notification>
     fun findStuckProcessing(before: LocalDateTime): List<Notification>
-    fun findByIdempotencyKey(recipientId: String, notificationType: NotificationType, referenceEventId: String): Notification?
+    fun findByIdempotencyKey(key: NotificationIdempotencyKey): Notification?
 }

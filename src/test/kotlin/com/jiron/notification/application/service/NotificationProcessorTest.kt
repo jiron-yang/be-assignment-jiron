@@ -1,6 +1,7 @@
 package com.jiron.notification.application.service
 
 import com.jiron.notification.application.port.out.NotificationChannel
+import com.jiron.notification.application.port.out.NotificationQueue
 import com.jiron.notification.application.port.out.NotificationRepository
 import com.jiron.notification.domain.model.Notification
 import com.jiron.notification.domain.vo.NotificationStatus
@@ -11,9 +12,8 @@ import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.mockito.Mockito
 
-class NotificationSenderTest {
+class NotificationProcessorTest {
 
-    // Mockito any() wrapper (Kotlin null-safety 대응)
     private fun <T> anyObject(): T {
         Mockito.any<T>()
         @Suppress("UNCHECKED_CAST")
@@ -24,7 +24,6 @@ class NotificationSenderTest {
         Mockito.`when`(it.save(anyObject())).thenAnswer { invocation -> invocation.arguments[0] }
     }
 
-    // 테스트용 PROCESSING 상태 알림 생성
     private fun createProcessingNotification(retryCount: Int = 0): Notification {
         val notification = Notification(
             recipientId = "user-1",
@@ -39,13 +38,11 @@ class NotificationSenderTest {
         return notification
     }
 
-    // 발송 성공 채널
     private val successChannel = object : NotificationChannel {
         override fun send(notification: Notification) { /* 성공 */ }
         override fun supports(type: NotificationType) = true
     }
 
-    // 발송 실패 채널
     private val failChannel = object : NotificationChannel {
         override fun send(notification: Notification) {
             throw RuntimeException("Send failed")
@@ -53,13 +50,19 @@ class NotificationSenderTest {
         override fun supports(type: NotificationType) = true
     }
 
+    private fun createProcessor(channel: NotificationChannel, notifications: List<Notification>): NotificationProcessor {
+        val queue = Mockito.mock(NotificationQueue::class.java)
+        Mockito.`when`(queue.dequeueForProcessing(Mockito.anyInt())).thenReturn(notifications)
+        return NotificationProcessor(queue, listOf(channel), notificationRepository)
+    }
+
     @Test
     @DisplayName("발송 성공 → SENT 상태")
-    fun sendAll_success_marksSent() {
-        val sender = NotificationSender(listOf(successChannel), notificationRepository)
+    fun execute_success_marksSent() {
         val notification = createProcessingNotification()
+        val processor = createProcessor(successChannel, listOf(notification))
 
-        sender.sendAll(listOf(notification))
+        processor.execute()
 
         assertThat(notification.status).isEqualTo(NotificationStatus.SENT)
         assertThat(notification.sentAt).isNotNull()
@@ -67,11 +70,11 @@ class NotificationSenderTest {
 
     @Test
     @DisplayName("발송 실패 → 재시도 스케줄링 (retryCount < max)")
-    fun sendAll_failure_schedulesRetry() {
-        val sender = NotificationSender(listOf(failChannel), notificationRepository)
+    fun execute_failure_schedulesRetry() {
         val notification = createProcessingNotification(retryCount = 0)
+        val processor = createProcessor(failChannel, listOf(notification))
 
-        sender.sendAll(listOf(notification))
+        processor.execute()
 
         assertThat(notification.status).isEqualTo(NotificationStatus.PENDING)
         assertThat(notification.retryCount).isEqualTo(1)
@@ -79,11 +82,11 @@ class NotificationSenderTest {
 
     @Test
     @DisplayName("발송 실패 → FAILED (retryCount >= max)")
-    fun sendAll_failure_marksFailed_whenMaxRetries() {
-        val sender = NotificationSender(listOf(failChannel), notificationRepository)
+    fun execute_failure_marksFailed_whenMaxRetries() {
         val notification = createProcessingNotification(retryCount = RetryPolicy.MAX_RETRY_COUNT)
+        val processor = createProcessor(failChannel, listOf(notification))
 
-        sender.sendAll(listOf(notification))
+        processor.execute()
 
         assertThat(notification.status).isEqualTo(NotificationStatus.FAILED)
     }

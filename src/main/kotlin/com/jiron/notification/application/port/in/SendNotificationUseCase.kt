@@ -1,6 +1,7 @@
 package com.jiron.notification.application.port.`in`
 
 import com.jiron.notification.domain.model.Notification
+import com.jiron.notification.domain.vo.NotificationIdempotencyKey
 import com.jiron.notification.domain.vo.NotificationType
 
 /**
@@ -19,4 +20,7 @@ data class SendNotificationCommand(
     val title: String,
     val content: String,
     val referenceEventId: String
-)
+) {
+    val idempotencyKey: NotificationIdempotencyKey
+        get() = NotificationIdempotencyKey(recipientId, notificationType, referenceEventId)
+}
