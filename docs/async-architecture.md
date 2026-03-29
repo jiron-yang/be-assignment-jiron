@@ -2,29 +2,32 @@
 
 ## 1. 전체 구조
 
-API 요청과 알림 발송을 비동기로 분리하여 장애 격리와 안정성을 확보한다.
+Hexagonal Architecture 기반으로 API 요청과 알림 발송을 비동기로 분리하여 장애 격리와 안정성을 확보한다.
 
 ```
-┌──────────┐     ┌───────────┐     ┌─────────────┐     ┌──────────────┐
-│  Client  │────>│  REST API │────>│  DB (H2/RDB)│<────│  Scheduler   │
-│          │     │           │     │  PENDING 저장 │     │  (폴링)       │
-└──────────┘     └───────────┘     └─────────────┘     └──────+───────┘
-                                                              │
-                                                              v
-                                                     ┌───────────────┐
-                                                     │ Notification  │
-                                                     │ Sender        │
-                                                     │ (EMAIL/IN_APP)│
-                                                     └───────────────┘
+┌──────────┐     ┌────────────────────┐     ┌─────────────┐     ┌──────────────────────┐
+│  Client  │────>│  NotificationController │────>│  DB (H2/RDB)│<────│  NotificationPolling │
+│          │     │  (SendNotificationUseCase)│    │  PENDING 저장 │     │  Scheduler (5초)     │
+└──────────┘     └────────────────────┘     └─────────────┘     └──────────+───────────┘
+                                                                           │
+                                                              ProcessPendingNotificationsUseCase
+                                                                           │
+                                                                           v
+                                                                  ┌────────────────┐
+                                                                  │ Notification   │
+                                                                  │ Processor      │
+                                                                  │ (EMAIL/IN_APP) │
+                                                                  └────────────────┘
 ```
 
 ### 처리 흐름
 
 1. 클라이언트가 알림 발송 API를 호출한다.
-2. API는 `notifications` 테이블에 `PENDING` 상태로 레코드를 저장하고 즉시 응답한다.
-3. 스케줄러가 주기적으로(예: 5초) `PENDING` 상태인 알림을 폴링한다.
-4. 폴링된 알림의 상태를 `PROCESSING`으로 변경한 뒤 발송을 시도한다.
-5. 발송 결과에 따라 `SENT` 또는 재시도/`FAILED` 처리한다.
+2. `NotificationController` → `SendNotificationUseCase` → `NotificationRepository.save()`로 `PENDING` 상태 알림을 저장하고 id를 반환한다.
+3. `NotificationPollingScheduler`가 5초마다 `ProcessPendingNotificationsUseCase.execute()`를 호출한다.
+4. `NotificationProcessor`가 `NotificationQueue.dequeueForProcessing()`으로 대기 중인 알림을 조회한다.
+5. 개별 알림마다 `TransactionTemplate`으로 별도 트랜잭션을 열어 발송을 처리한다.
+6. 발송 결과에 따라 `markSent()` 또는 `handleSendFailure(now)` 도메인 메서드를 호출한다.
 
 ## 2. 핵심 추상화: NotificationQueue
 
@@ -32,18 +35,12 @@ API 요청과 알림 발송을 비동기로 분리하여 장애 격리와 안정
 
 ```kotlin
 interface NotificationQueue {
-    /**
-     * 알림을 대기열에 추가한다.
-     */
-    fun enqueue(notification: Notification)
-
-    /**
-     * 발송 대기 중인 알림을 최대 batchSize만큼 가져온다.
-     * 가져온 알림은 PROCESSING 상태로 전환된다.
-     */
-    fun dequeue(batchSize: Int): List<Notification>
+    /** 발송 대기 중인 알림 조회 (PENDING + nextRetryAt <= now) */
+    fun dequeueForProcessing(batchSize: Int): List<Notification>
 }
 ```
+
+큐는 dequeue 전용이다. 알림 생성(enqueue)은 `NotificationRepository.save()`가 직접 담당한다. 이렇게 분리한 이유는 Command 경로에서 큐 의존을 제거하여 서비스 로직을 단순화하기 위함이다.
 
 ### DbNotificationQueue (현재 구현체)
 
@@ -52,23 +49,25 @@ DB를 메시지 큐로 활용하는 Outbox 패턴 구현체이다.
 ```kotlin
 @Component
 class DbNotificationQueue(
-    private val notificationRepository: NotificationRepository
+    private val notificationJpaRepository: NotificationJpaRepository
 ) : NotificationQueue {
 
     @Transactional
-    override fun enqueue(notification: Notification) {
-        notificationRepository.save(notification)
-    }
+    override fun dequeueForProcessing(batchSize: Int): List<Notification> {
+        val entities = notificationJpaRepository
+            .findAllByStatusAndNextRetryAtBeforeOrderByNextRetryAtAsc(
+                NotificationStatus.PENDING,
+                LocalDateTime.now(),
+                PageRequest.of(0, batchSize)
+            )
 
-    @Transactional
-    override fun dequeue(batchSize: Int): List<Notification> {
-        val pending = notificationRepository.findPendingNotifications(
-            status = NotificationStatus.PENDING,
-            now = LocalDateTime.now(),
-            limit = batchSize
-        )
-        pending.forEach { it.status = NotificationStatus.PROCESSING }
-        return pending
+        return entities.map { entity ->
+            val domain = NotificationMapper.toDomain(entity)
+            domain.startProcessing()
+            val updatedEntity = NotificationMapper.toEntity(domain)
+            val saved = notificationJpaRepository.save(updatedEntity)
+            NotificationMapper.toDomain(saved)
+        }
     }
 }
 ```
@@ -78,85 +77,103 @@ class DbNotificationQueue(
 ```sql
 SELECT * FROM notifications
 WHERE status = 'PENDING'
-  AND (next_retry_at IS NULL OR next_retry_at <= NOW())
-ORDER BY created_at ASC
+  AND next_retry_at <= NOW()
+ORDER BY next_retry_at ASC
 LIMIT :batchSize
 ```
 
-## 3. 발송 처리: NotificationSender
+## 3. 발송 처리: NotificationProcessor
 
-채널별 발송 로직을 추상화한다. 대기열 구현체와 독립적으로 동작한다.
+`ProcessPendingNotificationsUseCase`를 구현하며, 채널별 발송 로직을 처리한다.
 
 ```kotlin
-interface NotificationSender {
-    fun support(type: NotificationType): Boolean
-    fun send(notification: Notification): SendResult
-}
+@Service
+class NotificationProcessor(
+    private val notificationQueue: NotificationQueue,
+    private val channels: List<NotificationChannel>,
+    private val notificationRepository: NotificationRepository,
+    private val transactionTemplate: TransactionTemplate
+) : ProcessPendingNotificationsUseCase {
 
-data class SendResult(
-    val success: Boolean,
-    val errorMessage: String? = null
-)
+    override fun execute() {
+        val notifications = notificationQueue.dequeueForProcessing(batchSize = 10)
+        notifications.forEach { notification ->
+            transactionTemplate.executeWithoutResult {
+                sendOne(notification)
+            }
+        }
+    }
+}
 ```
 
-채널별 구현체:
-- `EmailNotificationSender`: 이메일 발송
-- `InAppNotificationSender`: 인앱 알림 발송
+### 배치 트랜잭션 분리
 
-스케줄러는 `NotificationType`에 맞는 `NotificationSender`를 선택하여 발송한다.
+`TransactionTemplate`을 사용하여 개별 알림마다 독립된 트랜잭션을 연다. 하나의 알림 발송이 실패해도 나머지 알림 처리에 영향을 주지 않는다.
+
+### 채널 추상화
+
+```kotlin
+interface NotificationChannel {
+    fun send(notification: Notification)
+    fun supports(type: NotificationType): Boolean
+}
+```
+
+`NotificationType`에 맞는 `NotificationChannel`을 선택하여 발송한다. 현재 `EmailNotificationChannel`이 구현되어 있다.
+
+## 4. UseCase 포트를 통한 호출 구조
+
+스케줄러는 UseCase 포트를 통해 서비스를 호출한다. 스케줄러가 서비스 구현체에 직접 의존하지 않는다.
 
 ```kotlin
 @Component
-class NotificationDispatcher(
-    private val senders: List<NotificationSender>
+class NotificationPollingScheduler(
+    private val processPendingNotificationsUseCase: ProcessPendingNotificationsUseCase
 ) {
-    fun dispatch(notification: Notification): SendResult {
-        val sender = senders.first { it.support(notification.notificationType) }
-        return sender.send(notification)
+    @Scheduled(fixedDelay = 5000)
+    fun poll() {
+        processPendingNotificationsUseCase.execute()
     }
 }
-```
 
-## 4. Kafka 교체 전략
-
-현재 DB 폴링 방식에서 Kafka로 전환할 때, `NotificationQueue` 인터페이스만 교체하면 된다.
-
-```
-현재:  API → DbNotificationQueue → DB → Scheduler(폴링) → NotificationSender
-교체:  API → KafkaNotificationQueue → Kafka → Consumer → NotificationSender
-```
-
-### KafkaNotificationQueue (교체 시 구현체)
-
-```kotlin
 @Component
-@Profile("kafka")
-class KafkaNotificationQueue(
-    private val kafkaTemplate: KafkaTemplate<String, Notification>
-) : NotificationQueue {
-
-    override fun enqueue(notification: Notification) {
-        kafkaTemplate.send("notification-topic", notification.recipientId.toString(), notification)
-    }
-
-    override fun dequeue(batchSize: Int): List<Notification> {
-        // Kafka Consumer에서 직접 처리하므로 사용하지 않음
-        throw UnsupportedOperationException("Kafka consumer handles dequeue")
+class StuckNotificationRecoveryScheduler(
+    private val recoverStuckNotificationsUseCase: RecoverStuckNotificationsUseCase
+) {
+    @Scheduled(fixedDelay = 60000)
+    fun recover() {
+        recoverStuckNotificationsUseCase.execute()
     }
 }
 ```
+
+## 5. Kafka 교체 전략
+
+현재 DB 폴링 방식에서 Kafka로 전환할 때의 교체 방법이다.
+
+```
+현재:  API → Repository.save() → DB → Scheduler → NotificationQueue.dequeue() → NotificationProcessor
+교체:  API → Repository.save() + KafkaTemplate.send() → Kafka Consumer → NotificationProcessor
+```
+
+`NotificationQueue`가 dequeue 전용이므로, Kafka 전환 시 다음과 같이 변경한다:
+
+1. 알림 저장 시 Kafka에도 메시지를 발행하는 이벤트 발행 구조 추가
+2. Kafka Consumer가 `ProcessPendingNotificationsUseCase`를 대체
+3. `NotificationPollingScheduler` 제거
+4. `DbNotificationQueue`는 fallback 또는 제거
 
 ### 교체 시 변경 범위
 
 | 컴포넌트 | 변경 여부 | 설명 |
 |----------|-----------|------|
-| NotificationQueue | 구현체 교체 | `DbNotificationQueue` → `KafkaNotificationQueue` |
-| NotificationSender | 변경 없음 | 발송 로직은 대기열과 무관 |
-| NotificationDispatcher | 변경 없음 | Sender 선택 로직 동일 |
-| REST API | 변경 없음 | `NotificationQueue.enqueue()` 호출만 함 |
-| Scheduler | 제거 | Kafka Consumer가 대체 |
+| NotificationQueue | 구현체 교체 또는 제거 | Kafka Consumer가 대체 |
+| NotificationChannel | 변경 없음 | 발송 로직은 대기열과 무관 |
+| NotificationRepository | 변경 없음 | Command 저장 로직 동일 |
+| REST API / Controller | 변경 없음 | UseCase 호출만 함 |
+| NotificationPollingScheduler | 제거 | Kafka Consumer가 대체 |
 
-## 5. 장애 격리
+## 6. 장애 격리
 
 API와 발송 처리가 분리되어 있어 다음과 같은 장애 격리가 가능하다.
 
