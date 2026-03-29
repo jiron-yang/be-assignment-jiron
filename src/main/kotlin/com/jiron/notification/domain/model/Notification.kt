@@ -53,9 +53,7 @@ class Notification(
      * 발송 처리 시작: PENDING → PROCESSING
      */
     fun startProcessing() {
-        require(status == NotificationStatus.PENDING) {
-            "Cannot start processing: current status is $status, expected PENDING"
-        }
+        require(status.canProcess) { "Cannot start processing from $status" }
         status = NotificationStatus.PROCESSING
     }
 
@@ -63,9 +61,7 @@ class Notification(
      * 발송 완료 처리: PROCESSING → SENT
      */
     fun markSent() {
-        require(status == NotificationStatus.PROCESSING) {
-            "Cannot mark as sent: current status is $status, expected PROCESSING"
-        }
+        require(status.canComplete) { "Cannot mark as sent from $status" }
         status = NotificationStatus.SENT
         sentAt = LocalDateTime.now()
     }
@@ -74,9 +70,7 @@ class Notification(
      * 발송 실패 처리: PROCESSING → FAILED
      */
     fun markFailed() {
-        require(status == NotificationStatus.PROCESSING) {
-            "Cannot mark as failed: current status is $status, expected PROCESSING"
-        }
+        require(status.canFail) { "Cannot mark as failed from $status" }
         status = NotificationStatus.FAILED
     }
 
@@ -84,9 +78,7 @@ class Notification(
      * PROCESSING 상태에서 PENDING으로 복구 (stuck 상태 복구용)
      */
     fun resetToPending() {
-        require(status == NotificationStatus.PROCESSING) {
-            "Cannot reset to pending: current status is $status, expected PROCESSING"
-        }
+        require(status.canRetry) { "Cannot reset to pending from $status" }
         status = NotificationStatus.PENDING
     }
 
@@ -94,9 +86,7 @@ class Notification(
      * 발송 실패 시 재시도 가능 여부를 판단하여 재시도 스케줄링 또는 최종 실패 처리
      */
     fun handleSendFailure(now: LocalDateTime) {
-        require(status == NotificationStatus.PROCESSING) {
-            "Cannot handle failure: current status is $status, expected PROCESSING"
-        }
+        require(status.canFail) { "Cannot handle failure from $status" }
         val nextRetry = RetryPolicy.calculateNextRetryAt(retryCount, now)
         if (nextRetry != null) {
             retryCount++
