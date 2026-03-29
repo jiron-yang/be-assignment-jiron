@@ -21,7 +21,6 @@ object NotificationMapper {
             nextRetryAt = entity.nextRetryAt,
             referenceEventId = entity.referenceEventId,
             createdAt = entity.createdAt,
-            updatedAt = entity.updatedAt,
             sentAt = entity.sentAt
         )
     }
@@ -40,7 +39,6 @@ object NotificationMapper {
             nextRetryAt = domain.nextRetryAt,
             referenceEventId = domain.referenceEventId,
             createdAt = domain.createdAt,
-            updatedAt = domain.updatedAt,
             sentAt = domain.sentAt
         )
     }

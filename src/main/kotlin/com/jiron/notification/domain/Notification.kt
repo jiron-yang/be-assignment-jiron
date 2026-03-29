@@ -18,7 +18,6 @@ class Notification(
     var nextRetryAt: LocalDateTime = LocalDateTime.now(),
     val referenceEventId: String,
     val createdAt: LocalDateTime = LocalDateTime.now(),
-    var updatedAt: LocalDateTime = LocalDateTime.now(),
     var sentAt: LocalDateTime? = null
 ) {
 
@@ -30,7 +29,6 @@ class Notification(
             "Cannot start processing: current status is $status, expected PENDING"
         }
         status = NotificationStatus.PROCESSING
-        updatedAt = LocalDateTime.now()
     }
 
     /**
@@ -42,7 +40,6 @@ class Notification(
         }
         status = NotificationStatus.SENT
         sentAt = LocalDateTime.now()
-        updatedAt = LocalDateTime.now()
     }
 
     /**
@@ -53,7 +50,6 @@ class Notification(
             "Cannot mark as failed: current status is $status, expected PROCESSING"
         }
         status = NotificationStatus.FAILED
-        updatedAt = LocalDateTime.now()
     }
 
     /**
@@ -64,7 +60,6 @@ class Notification(
             "Cannot reset to pending: current status is $status, expected PROCESSING"
         }
         status = NotificationStatus.PENDING
-        updatedAt = LocalDateTime.now()
     }
 
     /**
@@ -77,6 +72,5 @@ class Notification(
         retryCount++
         this.nextRetryAt = nextRetryAt
         status = NotificationStatus.PENDING
-        updatedAt = LocalDateTime.now()
     }
 }

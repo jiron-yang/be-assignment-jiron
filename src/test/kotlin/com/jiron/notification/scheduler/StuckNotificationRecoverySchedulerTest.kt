@@ -4,17 +4,21 @@ import com.jiron.notification.domain.NotificationStatus
 import com.jiron.notification.domain.NotificationType
 import com.jiron.notification.infrastructure.persistence.NotificationEntity
 import com.jiron.notification.infrastructure.persistence.NotificationJpaRepository
+import jakarta.persistence.EntityManager
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.boot.test.context.SpringBootTest
+import org.springframework.transaction.annotation.Transactional
 import java.time.LocalDateTime
 
 @SpringBootTest
+@Transactional
 class StuckNotificationRecoverySchedulerTest @Autowired constructor(
     private val stuckNotificationRecoveryScheduler: StuckNotificationRecoveryScheduler,
-    private val notificationJpaRepository: NotificationJpaRepository
+    private val notificationJpaRepository: NotificationJpaRepository,
+    private val entityManager: EntityManager
 ) {
 
     @Test
@@ -24,13 +28,16 @@ class StuckNotificationRecoverySchedulerTest @Autowired constructor(
         val stuckEntity = createEntity("stuck-event-1").apply {
             status = NotificationStatus.PROCESSING
         }
-        notificationJpaRepository.save(stuckEntity)
-
-        // updatedAt을 6분 전으로 강제 설정
-        notificationJpaRepository.flush()
-        val sixMinutesAgo = LocalDateTime.now().minusMinutes(6)
-        stuckEntity.updatedAt = sixMinutesAgo
         notificationJpaRepository.saveAndFlush(stuckEntity)
+
+        // updatedAt을 6분 전으로 강제 설정 (네이티브 쿼리로 @PreUpdate 우회)
+        val sixMinutesAgo = LocalDateTime.now().minusMinutes(6)
+        entityManager.createNativeQuery("UPDATE notifications SET updated_at = ? WHERE id = ?")
+            .setParameter(1, sixMinutesAgo)
+            .setParameter(2, stuckEntity.id)
+            .executeUpdate()
+        entityManager.flush()
+        entityManager.clear()
 
         // when
         stuckNotificationRecoveryScheduler.recover()
