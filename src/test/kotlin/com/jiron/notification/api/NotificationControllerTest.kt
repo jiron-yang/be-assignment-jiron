@@ -2,7 +2,7 @@ package com.jiron.notification.api
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.jiron.notification.api.dto.SendNotificationRequest
-import com.jiron.notification.domain.NotificationType
+import com.jiron.notification.domain.vo.NotificationType
 import org.hamcrest.Matchers.hasSize
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test

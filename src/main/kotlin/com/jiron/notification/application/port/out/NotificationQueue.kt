@@ -1,6 +1,6 @@
-package com.jiron.notification.application
+package com.jiron.notification.application.port.out
 
-import com.jiron.notification.domain.Notification
+import com.jiron.notification.domain.model.Notification
 
 /**
  * 알림 큐 추상화 인터페이스

@@ -1,8 +1,9 @@
-package com.jiron.notification.application
+package com.jiron.notification.application.service
 
-import com.jiron.notification.domain.Notification
-import com.jiron.notification.domain.NotificationChannel
-import com.jiron.notification.domain.RetryPolicy
+import com.jiron.notification.application.port.out.NotificationChannel
+import com.jiron.notification.application.port.out.NotificationRepository
+import com.jiron.notification.domain.model.Notification
+import com.jiron.notification.domain.vo.RetryPolicy
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional
@@ -14,7 +15,7 @@ import java.time.LocalDateTime
 @Component
 class NotificationSender(
     private val channels: List<NotificationChannel>,
-    private val notificationProvider: NotificationProvider
+    private val notificationRepository: NotificationRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(NotificationSender::class.java)
@@ -30,13 +31,13 @@ class NotificationSender(
                 if (channel == null) {
                     logger.error("No channel found for notification type: ${notification.notificationType}")
                     notification.markFailed()
-                    notificationProvider.save(notification)
+                    notificationRepository.save(notification)
                     continue
                 }
 
                 channel.send(notification)
                 notification.markSent()
-                notificationProvider.save(notification)
+                notificationRepository.save(notification)
                 logger.info("Notification sent successfully: id=${notification.id}")
             } catch (e: Exception) {
                 logger.error("Failed to send notification: id=${notification.id}", e)
@@ -47,11 +48,11 @@ class NotificationSender(
                     )
                     if (nextRetryAt != null) {
                         notification.scheduleRetry(nextRetryAt)
-                        notificationProvider.save(notification)
+                        notificationRepository.save(notification)
                         logger.info("Notification scheduled for retry: id=${notification.id}, retryCount=${notification.retryCount}")
                     } else {
                         notification.markFailed()
-                        notificationProvider.save(notification)
+                        notificationRepository.save(notification)
                         logger.warn("Notification max retries exceeded: id=${notification.id}")
                     }
                 } catch (retryError: Exception) {

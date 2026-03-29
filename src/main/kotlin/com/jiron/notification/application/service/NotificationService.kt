@@ -1,7 +1,9 @@
-package com.jiron.notification.application
+package com.jiron.notification.application.service
 
 import com.jiron.notification.api.dto.SendNotificationRequest
-import com.jiron.notification.domain.Notification
+import com.jiron.notification.application.port.out.NotificationQueue
+import com.jiron.notification.application.port.out.NotificationRepository
+import com.jiron.notification.domain.model.Notification
 import org.slf4j.LoggerFactory
 import org.springframework.dao.DataIntegrityViolationException
 import org.springframework.data.domain.Page
@@ -15,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional
 @Service
 class NotificationService(
     private val notificationQueue: NotificationQueue,
-    private val notificationProvider: NotificationProvider
+    private val notificationRepository: NotificationRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(NotificationService::class.java)
@@ -26,7 +28,7 @@ class NotificationService(
      */
     @Transactional
     fun send(request: SendNotificationRequest): Notification {
-        val existing = notificationProvider.findByIdempotencyKey(
+        val existing = notificationRepository.findByIdempotencyKey(
             request.recipientId,
             request.notificationType,
             request.referenceEventId
@@ -49,7 +51,7 @@ class NotificationService(
         } catch (e: DataIntegrityViolationException) {
             logger.info("Duplicate notification request detected, returning existing: recipientId={}, type={}, eventId={}",
                 request.recipientId, request.notificationType, request.referenceEventId)
-            notificationProvider.findByIdempotencyKey(
+            notificationRepository.findByIdempotencyKey(
                 request.recipientId,
                 request.notificationType,
                 request.referenceEventId
@@ -59,11 +61,11 @@ class NotificationService(
 
     /** 알림 단건 조회 */
     fun findById(id: Long): Notification? {
-        return notificationProvider.findById(id)
+        return notificationRepository.findById(id)
     }
 
     /** 수신자별 알림 목록 조회 */
     fun findByRecipientId(recipientId: String, pageable: Pageable): Page<Notification> {
-        return notificationProvider.findByRecipientId(recipientId, pageable)
+        return notificationRepository.findByRecipientId(recipientId, pageable)
     }
 }

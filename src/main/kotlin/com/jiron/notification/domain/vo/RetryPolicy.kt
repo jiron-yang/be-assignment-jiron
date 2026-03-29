@@ -1,4 +1,4 @@
-package com.jiron.notification.domain
+package com.jiron.notification.domain.vo
 
 import java.time.Duration
 import java.time.LocalDateTime

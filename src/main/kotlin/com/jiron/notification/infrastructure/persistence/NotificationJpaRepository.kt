@@ -1,7 +1,7 @@
 package com.jiron.notification.infrastructure.persistence
 
-import com.jiron.notification.domain.NotificationStatus
-import com.jiron.notification.domain.NotificationType
+import com.jiron.notification.domain.vo.NotificationStatus
+import com.jiron.notification.domain.vo.NotificationType
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.data.jpa.repository.JpaRepository

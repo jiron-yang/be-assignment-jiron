@@ -1,47 +1,45 @@
-package com.jiron.notification.application
+package com.jiron.notification.infrastructure.persistence
 
-import com.jiron.notification.domain.Notification
-import com.jiron.notification.domain.NotificationStatus
-import com.jiron.notification.domain.NotificationType
-import com.jiron.notification.infrastructure.persistence.NotificationJpaRepository
-import com.jiron.notification.infrastructure.persistence.NotificationMapper
+import com.jiron.notification.application.port.out.NotificationRepository
+import com.jiron.notification.domain.model.Notification
+import com.jiron.notification.domain.vo.NotificationStatus
+import com.jiron.notification.domain.vo.NotificationType
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable
 import org.springframework.stereotype.Component
 import java.time.LocalDateTime
 
 /**
- * 알림 Provider 레이어
- * Service가 Repository에 직접 의존하지 않도록 중간 레이어 역할
+ * 알림 저장소 JPA 구현체
  */
 @Component
-class NotificationProvider(
+class JpaNotificationRepository(
     private val notificationJpaRepository: NotificationJpaRepository
-) {
+) : NotificationRepository {
 
-    fun save(notification: Notification): Notification {
+    override fun save(notification: Notification): Notification {
         val entity = NotificationMapper.toEntity(notification)
         val saved = notificationJpaRepository.save(entity)
         return NotificationMapper.toDomain(saved)
     }
 
-    fun findById(id: Long): Notification? {
+    override fun findById(id: Long): Notification? {
         return notificationJpaRepository.findById(id).orElse(null)
             ?.let { NotificationMapper.toDomain(it) }
     }
 
-    fun findByRecipientId(recipientId: String, pageable: Pageable): Page<Notification> {
+    override fun findByRecipientId(recipientId: String, pageable: Pageable): Page<Notification> {
         return notificationJpaRepository.findAllByRecipientId(recipientId, pageable)
             .map { NotificationMapper.toDomain(it) }
     }
 
-    fun findStuckProcessing(before: LocalDateTime): List<Notification> {
+    override fun findStuckProcessing(before: LocalDateTime): List<Notification> {
         return notificationJpaRepository.findAllByStatusAndUpdatedAtBefore(
             NotificationStatus.PROCESSING, before
         ).map { NotificationMapper.toDomain(it) }
     }
 
-    fun findByIdempotencyKey(
+    override fun findByIdempotencyKey(
         recipientId: String,
         notificationType: NotificationType,
         referenceEventId: String

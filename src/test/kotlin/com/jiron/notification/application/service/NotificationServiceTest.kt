@@ -1,7 +1,7 @@
-package com.jiron.notification.application
+package com.jiron.notification.application.service
 
 import com.jiron.notification.api.dto.SendNotificationRequest
-import com.jiron.notification.domain.NotificationType
+import com.jiron.notification.domain.vo.NotificationType
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName

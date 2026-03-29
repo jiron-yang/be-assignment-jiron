@@ -1,8 +1,8 @@
 package com.jiron.notification.infrastructure.persistence
 
-import com.jiron.notification.application.NotificationQueue
-import com.jiron.notification.domain.Notification
-import com.jiron.notification.domain.NotificationStatus
+import com.jiron.notification.application.port.out.NotificationQueue
+import com.jiron.notification.domain.model.Notification
+import com.jiron.notification.domain.vo.NotificationStatus
 import org.springframework.data.domain.PageRequest
 import org.springframework.stereotype.Component
 import org.springframework.transaction.annotation.Transactional

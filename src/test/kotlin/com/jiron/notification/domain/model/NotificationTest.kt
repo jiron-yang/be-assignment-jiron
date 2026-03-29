@@ -1,5 +1,7 @@
-package com.jiron.notification.domain
+package com.jiron.notification.domain.model
 
+import com.jiron.notification.domain.vo.NotificationStatus
+import com.jiron.notification.domain.vo.NotificationType
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.junit.jupiter.api.DisplayName

@@ -1,4 +1,4 @@
-package com.jiron.notification.domain
+package com.jiron.notification.domain.vo
 
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.jupiter.api.DisplayName

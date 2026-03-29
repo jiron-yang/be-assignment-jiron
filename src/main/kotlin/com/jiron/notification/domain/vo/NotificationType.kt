@@ -1,4 +1,4 @@
-package com.jiron.notification.domain
+package com.jiron.notification.domain.vo
 
 /**
  * 알림 유형

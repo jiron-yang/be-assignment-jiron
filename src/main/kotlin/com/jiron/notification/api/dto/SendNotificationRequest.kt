@@ -1,6 +1,6 @@
 package com.jiron.notification.api.dto
 
-import com.jiron.notification.domain.NotificationType
+import com.jiron.notification.domain.vo.NotificationType
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.NotNull
 

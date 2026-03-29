@@ -2,7 +2,7 @@ package com.jiron.notification.api
 
 import com.jiron.notification.api.dto.NotificationResponse
 import com.jiron.notification.api.dto.SendNotificationRequest
-import com.jiron.notification.application.NotificationService
+import com.jiron.notification.application.service.NotificationService
 import jakarta.validation.Valid
 import org.springframework.data.domain.Page
 import org.springframework.data.domain.Pageable

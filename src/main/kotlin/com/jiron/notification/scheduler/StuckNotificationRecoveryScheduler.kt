@@ -1,6 +1,6 @@
 package com.jiron.notification.scheduler
 
-import com.jiron.notification.application.NotificationProvider
+import com.jiron.notification.application.port.out.NotificationRepository
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component
@@ -13,7 +13,7 @@ import java.time.LocalDateTime
  */
 @Component
 class StuckNotificationRecoveryScheduler(
-    private val notificationProvider: NotificationProvider
+    private val notificationRepository: NotificationRepository
 ) {
 
     private val logger = LoggerFactory.getLogger(StuckNotificationRecoveryScheduler::class.java)
@@ -22,11 +22,11 @@ class StuckNotificationRecoveryScheduler(
     @Scheduled(fixedDelay = 60000)
     fun recover() {
         val threshold = LocalDateTime.now().minusMinutes(5)
-        val stuckNotifications = notificationProvider.findStuckProcessing(threshold)
+        val stuckNotifications = notificationRepository.findStuckProcessing(threshold)
 
         stuckNotifications.forEach { notification ->
             notification.resetToPending()
-            notificationProvider.save(notification)
+            notificationRepository.save(notification)
         }
 
         if (stuckNotifications.isNotEmpty()) {

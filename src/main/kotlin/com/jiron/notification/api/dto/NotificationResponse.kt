@@ -1,8 +1,8 @@
 package com.jiron.notification.api.dto
 
-import com.jiron.notification.domain.Notification
-import com.jiron.notification.domain.NotificationStatus
-import com.jiron.notification.domain.NotificationType
+import com.jiron.notification.domain.model.Notification
+import com.jiron.notification.domain.vo.NotificationStatus
+import com.jiron.notification.domain.vo.NotificationType
 import java.time.LocalDateTime
 
 /**

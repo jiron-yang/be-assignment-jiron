@@ -1,8 +1,8 @@
 package com.jiron.notification.infrastructure.channel
 
-import com.jiron.notification.domain.Notification
-import com.jiron.notification.domain.NotificationChannel
-import com.jiron.notification.domain.NotificationType
+import com.jiron.notification.application.port.out.NotificationChannel
+import com.jiron.notification.domain.model.Notification
+import com.jiron.notification.domain.vo.NotificationType
 import org.slf4j.LoggerFactory
 import org.springframework.stereotype.Component
 

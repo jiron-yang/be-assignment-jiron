@@ -1,7 +1,7 @@
 package com.jiron.notification.scheduler
 
-import com.jiron.notification.application.NotificationQueue
-import com.jiron.notification.application.NotificationSender
+import com.jiron.notification.application.port.out.NotificationQueue
+import com.jiron.notification.application.service.NotificationSender
 import org.slf4j.LoggerFactory
 import org.springframework.scheduling.annotation.Scheduled
 import org.springframework.stereotype.Component

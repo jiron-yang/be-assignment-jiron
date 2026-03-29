@@ -1,6 +1,6 @@
 package com.jiron.notification.infrastructure.persistence
 
-import com.jiron.notification.domain.Notification
+import com.jiron.notification.domain.model.Notification
 
 /**
  * 알림 도메인 ↔ JPA Entity 변환 매퍼

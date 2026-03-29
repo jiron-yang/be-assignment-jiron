@@ -1,7 +1,7 @@
 package com.jiron.notification.scheduler
 
-import com.jiron.notification.domain.NotificationStatus
-import com.jiron.notification.domain.NotificationType
+import com.jiron.notification.domain.vo.NotificationStatus
+import com.jiron.notification.domain.vo.NotificationType
 import com.jiron.notification.infrastructure.persistence.NotificationEntity
 import com.jiron.notification.infrastructure.persistence.NotificationJpaRepository
 import jakarta.persistence.EntityManager
